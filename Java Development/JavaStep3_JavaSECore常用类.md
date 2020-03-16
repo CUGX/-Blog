@@ -76,6 +76,7 @@
 1. 正则表达式：用一些有意义的字符组成的字符串；
 
 2. 原子：正则表达式的最基本的组成单位。正则表达式可以单独使用的字符就是原子；
+
    - 所有可以显示的字符或非打印的字符；
 
    - “.”、“？”、“+”、“*”有特殊意义，若要 单独使用他们，需要使用转义字符“\”，Java中“\”也需要转义，所以“ab\\+"才代表ab+；
@@ -92,7 +93,7 @@
      | \\\W | 表示非a-zA-Z0-9的字符              |
 
    - 自己定义个原子：
-     
+
      - [0-9]
      - [5-8]
      - [a-z5-8]
@@ -794,9 +795,379 @@ syso(user1);
 
 ### 4.1、编码问题
 
+1. 一个字符串放入文本文件-->可以认为是字符串的序列化
+
+2. 从文本文件中读取字符串-->可以认为是字符串的反序列化
+
+3. 文本文件中内容都是以字节的方式呈现的；其实在字符串放入文本文件时，需要把字符串转换成字节，转换成字节的时候可以选择多种编码；
+
+4. 以什么样的编码方式转换成字节的，将来再转换成字符串也需要用该编码；
+
+   ```java
+   /*常用的编码：gbk、UTF-8、UTF-16BE
+   java中一个字符占两个字节，中英文都是；
+       Java默认使用UTF-16BE编码，一个中英字符占两个字节;
+       gbk编码1个英文字母占1B，中文占2个字节;
+       UTF-8编码1个英文字母占1B，中文占3个字节;
+   */
+   String s = "HelloWorld";
+   byte[] b1 = s.getBytes();//转换成字节数组
+   for(byte c : b1) {
+       syso(Integer.toHexString(c&0xFF)+" ");//16进制显示
+   }
+   
+   byte[] b1 = s.getBytes("gbk"); //以什么编码方式转换成字节数组
+   
+   String s = new String(b1);//将字符数组变成字符串
+   String s = new String(b1,"gbk"); //以gbk编码将字符数组变成字符串
+   ```
+
+   
+
 ### 4.2、java.io.File
 
-### 4.3、
+```java
+//java.io.File 表示文件或目录
+File f = new File("D:\\Javaworkspace");
+f.exists();//判断目录是否存在
+File f1 = new File("D:\\Javaworkspace\\aa");
+//=====》等价于：
+File f1 = new File(f,"aa");//f相当于f1的父目录
+File f1 = new File("D:\\Javaworkspace","aa");
 
-### 4.4、4.5、4.6、4.1、4.1、
+if(!f1.exists()){
+    f1.mkdir();	//不存在则创建目录
+    f1.mkdirs();//创建多级目录
+}else{
+    f1.delete();//删除目录
+}
+f1.isDirectory();//判断是否为目录，不存在也返回false
+f1.isFile();//判断是否为文件 ，不存在也返回false
+
+//文件操作
+File f2 = new File("D:\\Javaworkspace\\a.java");
+f2.exists();
+f2.isFile();
+File f3 = new File(f,"a.java");
+if(!f3.exists()){
+    f3.createNewFile();//创建文件，要捕捉异常 
+}else {
+    f3.delete();/删除文件
+}
+file.getAbsolutePath();//得到绝对路径
+file.getName();//返回最后一级
+file.getParent();//返回非最后一级的目录，父目录的字符串
+
+file.getParentFile();//得到父目录的File对象
+```
+
+
+
+### 4.3、文件的过滤操作
+
+```java
+list() & lsitFiles();
+list(FilenameFilter);
+listFile(FileFilter or FilenameFilter);//注意递归问题
+/*
+文件删除：目录必须为空目录才能 被删除，所以 删除一个目录必须先删除其子目录的内容
+	list(): 列出该目录下所有的目录名和文件名，不会列出父目录和子目录;
+	lsitFiles() 列出该目录下所有的目录名和文件名，不会列出整个目录的名称，也不会遍历子目录，直接列出目录下的，产生文件对象
+*/
+String[] filename = file.list();
+String[] files = file.listFiles();
+//打印所有文件和目录 ，包括子目录
+public static void main(File file) {
+    String[] files = file.listFiles();
+    for(File f : files) {
+        if(f,isFile){
+            syso(f.getAbsolutePath);
+        }else{
+            listFile1(f);//递归调用
+        }
+    }
+}
+
+File[] files = file.listFiles(new FileFilter(){
+    public boolean accept(File pathname) {
+        //pathname就是每个file下的文件或目录
+        return pathname.getAbsolutePath().endwith(".java"); //过滤以.java结尾的文件
+    }
+});
+public static void listFile2(File file) {
+
+}
+```
+
+
+
+> 文件的读写操作：
+> 字节流----->读写以字节为单位
+> 字符流----->读写以字符为单位，只适合文本类的文件，不适合二进制文件
+> 	输入流--->读操作
+> 	输出流--->写操作
+
+### 4.4、以字节为单位的输入输出流
+
+输入流--->读操作 InputStream
+		---->FileInputStream 把文件作为字节流进行读操作
+		---->BufferedInputStream 缓冲输入（缓冲区，先读入缓冲区）
+		---->PipedInputStream 管道流
+		---->DataInputStream  readInt readBoolean ...
+		---->System.in  从键盘度数据 
+	输出流--->写操作 OutputStream
+		---->FileOutputStream 把文件作为字节流进行写操作
+		---->BufferedOutputStream
+		---->PipedOutputStream 管道流
+		---->DataOutputStream writeInt writeBoolean ...
+		---->System.out  属于PrintStream
+
+```java
+/*将输入管道和输出管道关联起来，需要用一句体现关联关系
+out 写出来的数据正好被in读到
+  输入输出过程中，可以读取文本、图片、mp3、MP4等格式文件，输出都能够达到对应格式的文件
+*/
+PipedInputStream(PipedOutputStream());
+PipedOutputStream((PipedInputStream));
+    
+//文件已经存在时,直接往文件中追加内容，则将IO流的第二个参数置为true即可
+FileInputStream fis new FileInputStream("D:\\clanguage\\app.c"，true);
+
+//所有IO操作都有IOException产生
+public static void test1() {
+    FileInputStream fis new FileInputStream("D:\\clanguage\\app.c");
+    //若app.txt不存在就直接创建，存在先删除再创建 	
+    FileOutputStream fos new FileOutputStream("D:\\clanguage\\app.txt");
+    int c;
+    while((c = fis.read())!=-1) {
+        syso((char)c);
+        fos.writer(c);
+    }
+    fis.close();
+    fos.close();//关闭文件
+    /*fis.read(); //一次读取一个字节，直到文件末尾，返回-1
+    read()方法的问题：
+        1. 对于单字节编码字符没有问题，对于一个字符占用多个字节的文字打印直接打印会乱码
+        2. 对于较大的文件读取效率比较低 
+    */
+}
+
+public static void test2(){
+    FileInputStream fis new FileInputStream("D:\\clanguage\\app.c");
+    FileOutputStream fos new FileOutputStream("D:\\clanguage\\app.txt");
+    byte[] b = new byte[1024*5];//批量读取，效率较高
+    //往b字节数组中放，从第0个位置开始放，最多放b.length个
+    int bytes = fis.read(b,0,b.length);
+    String s = new String(b,0,bytes);
+    syso(s);
+    //方法二：好处是，文件较大时操作不需要定义一个特别大的数组，会分次批量读取
+    int bytes;
+    while((bytes=fis.read()) != -1 ){
+        String s = new String(b,0,bytes);
+        fos.write(b,0,bytes);
+    }	
+    fis.close();//关闭文件
+}
+
+public static void test3(){
+    FileInputStream fis new FileInputStream("D:\\clanguage\\app.c");
+    FileOutputStream fos new FileOutputStream("D:\\clanguage\\app.txt");
+    //缺点：若文件太大，开辟的内存看见就太大，不合适，建议使用test2中的方法读取文件
+    int length = in.available();//返回可读的字节数
+    byte[] b = new byte[length];
+    fis.read(b);
+    fos.write(b);
+
+    fis.close();//关闭文件
+    fos.close();
+}
+
+public static void test4(){
+    FileInputStream fis new FileInputStream("D:\\clanguage\\app.c");
+    FileOutputStream fos new FileOutputStream("D:\\clanguage\\app.txt");
+
+    //aa.txt文件是UTF-编码，bb.txt为GBK编码，在转换成字符串时需要使用目标编码格式
+    byte[] b = new bytes[1024];
+    int bytes = fis.read(b,0,b.length);
+    String s = new String(b,0,b.length,"utf-8");
+    out.write(b,0,bytes);
+
+    fis.close();//关闭文件
+}
+```
+
+
+
+### 4.5、字符流
+
+> 字符流(适合文本的操作)-->都是由字节流构造而来（适配器模式）,字符流都带有缓冲区，需要flsuh
+
+输入流--->Reader
+		--->InputStreamReader
+		--->FileReader
+		--->BufferedReader 一次读一行readLine()
+			PrintWriter一起使用，可以直接使用println()方法，不用使用newLine()方法
+	输出流--->Writer
+		--->OutputStreamWriter
+		--->FileWriter
+		--->BufferedWriter write(String, int, int)                                                                                                         newLine()可以写字符串，但是需要知道起始、结束位置.
+
+```java
+public static void test() {
+    InputStreamReader in = new InputStreamReader(
+        new FileInputStream("D:\\clanguage\\app.c"),"GBK");
+    OutputStreamReader out = new OutputStreamReader(
+        new FileOutputStream("D:\\clanguage\\app.c"),"GBK");
+    //FileReader、
+    FileReader fr = new FileReader("D:\\clanguage\\app.c"); //等价上面的声明方法
+    FileWriter fw = new FileWriter("D:\\clanguage\\app.c");
+
+    //方法一：
+    int c;
+    while((c=in.read(c,0,c.length)!=-1)){
+        syso((char)c);
+        out.write(c);
+        out.flush();
+    }
+    //方法二：
+    int chars;
+    char[] c = new char[1024];
+    while((chars = in.read(c,0,c.length))!=-1){
+        String s = new String(c);
+        syso(s);
+        out.write(c,0,chars);
+        out.flush();
+    }
+    in.close();//关闭文件
+}
+
+public static void test2(){
+    BufferedReader br = new BufferedReader(( 
+        new InputStreamReader( 
+            new FileInputStream("D:\\clanguage\\app.c"))));
+    //上下等价
+    BufferedReader br = new BufferedReader( 
+        new FileReader("D:\\clanguage\\app.c"));
+    BufferedWriter bw = new BufferedWriter(
+        new FileWriter("D:\\clanguage\\app.c"));
+    //普通的读方法都有，其主要有readLine()方法 
+    //不识别换行，需要自己换行
+    String str = null;
+    while((str.br.readLine())!= null ){
+        syso(str);
+        bw.write(str,0,str.length());
+        bw.newLine();
+        bw.flush();
+    }
+    br.close();
+    bw.close();
+}
+
+//RandomAccessFile : 随机访问文件流
+public static void test() {
+    RandomAccessFile raf = new RandomAccessFile("D:\\clanguage\\app.c", "rw");
+    syso(raf.getPinter());
+    raf.writeInt(1000);
+
+    raf.seek(0);//定义位置
+    raf.readInt();
+}
+```
+
+
+
+### 4.6、java.util.Properties类
+
+java.util.Properties类，不是IO类、是HashSet的子类
+
+- 实际使用需要和IO集合在一起使用
+
+- 资源文件：以properties作为文件的扩展名
+
+- 文件的内容是以key = value的方式存放
+
+- 资源文件将来在设计中可以用来解耦+反射结合使用
+
+  后缀名：.properties		eg: a.properties
+
+```java
+public static void test() {
+    Properties prop = new Properties();
+    prop.load(new FileInputStream("D:\\clanguage\\a.properties"));
+
+    for(Object object : prop.keySet()){
+        String key = (String) object;
+        syso(key + " = " + prop.get(key));
+    }
+}
+```
+
+
+
+### 4.7、序列化
+
+> 序列化--->对象的序列化(对象进行存储or在网络中进行传递，该对象必须进行序列化)
+>
+> ​    java.io.ObjectOutputStream
+> ​	java.io.ObjectInputStream
+> ​	java.io.Serializable//该接口只是个规范，没有任何方法
+
+1. transient关键字
+
+   - 如果一个对象的属性用transient修饰，那么该属性不会做jvm默认的序列化工作;	
+
+   - 已经用transient关键字修饰的变量可以用如下方式进行自己的序列化和反序列化
+
+     ```java
+     private void readObject(java.io.ObjectInputStream stream) throws IOException,ClassNotFoundException{}
+     
+     private void writeObject(java.io.ObjectOutputStream stream) throws IOException,ClassNotFoundException{}
+     ```
+
+     
+
+2. 集合类如何序列化，比如ArrayList
+
+   1. 底层的对象数组是使用transient修饰的，
+   2. ArrayList中有数组，且数组不一定放元素，所以没有必要把整个数组序列化，只需要序列化有效元素;
+   3. 用以上两个方法签名来进行序列化和反序列化工作；
+
+3. java实现接口和继承都具有传递性:
+
+   - 如果父类实现了Serializable接口，那么其子类都可以序列化；
+
+   - 注意： 如果父类是可序列化的，那么反序列化子类的时候不会调用父类的构造函数；
+
+     如果父类是不可序列化的，而子类是可序列化的那么在子类进行反序列化时，会调用父类的构造函数；
+
+4. Java中的克隆功能 Object类中已经提供了相应功能;
+
+   - 一个类的对象要进行克隆可以实现Cloneable接口；
+   - 浅克隆or浅拷贝 原对象和拷贝对象不等，但是两者的地址相等
+   - 深克隆or深拷贝 需要通过序列化和反序列化的方式 ：原对象和拷贝对象不等，但是两者的地址也不相等；
+   - 这是一种设计模式--->原型模式。
+   - native关键字 表示在Java中进行声明，用C/C++实现的方法，这种方法是protected的，只能在本包中使用。
+
+5. IO和集合一起操作
+
+   ```
+   /*
+   案例 ：
+   	如下文本文件：
+   	1,zhangsan,20 
+   	2,lisi,21
+   	3,wangwu,22
+   	4,zhangsan,24
+   	5,lisi,35
+   	6,zhangsan,25
+   	7,wnagwu,26
+   	
+   要求：
+   	统计姓名出现的次数，按照次数降序输出，次数相同按照姓名字母升序排序。
+   思路：
+   	把名字放入Map集合中统计次数，再使用TreeSet进行排序
+   */
+   ```
+
+   
 
