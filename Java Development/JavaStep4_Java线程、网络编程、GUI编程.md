@@ -304,19 +304,39 @@ syso(value);
 
 ### 2.1、java.net.InetAdress
 
+```java
+InetAdress ad = InetAdress.getByName("www.163.com");
+syso(ad.getHostAddress());//打印网址的IP，电脑连上网才能 打印出来	
+
+//获取本机IP地址，默认127.0.0.1 
+InetAdress ad = InetAdress.getByName(null);
+syso(ad.getHostAddress());
+```
 
 
 
+### 2.2、java.net.ServerSocket、java.net.Socket
 
+1. 端口：计算机上的服务  都会运行在一个端口上，端口用整数表示，计算机最多有65536个端口，1024以下的端口基本被占用，我们一般使用1024以上的；
+2. 在计算机上开启一个服务，需要占用一个端口；
+3. 如何开启一个服务？在Java中使用ServerSocket类；
 
+```java
+//服务器端，
+ServerSocket s = new ServerSocket(9000);//9000端口
+//等待客户访问，没有客户访问，阻塞
+Socket socket = s.accept();
 
-### 2.2、java.net.ServerSocket
+//客户端：
+Socket socket = new Socket(ip,port);//IP和端口
 
+Socket socket = new Socket("127.0.0.1",9000);
 
-
-
-
-
+//socket的两个重要方法：
+socket.getInputStream
+socket.getOutputStream
+//客户端和服务器端的In和Out构成一对IO类
+```
 
 
 
@@ -343,6 +363,9 @@ syso(value);
 
 ### 2.4、在网络中传输对象
 
+1. 必须实现序列化接口；Serializable；
+2. 传输对象必须使用ObjectIn/OutputStream。
+
 
 
 ##  3、JavaCore GUI
@@ -356,19 +379,78 @@ syso(value);
 
 ### 3.1、组件和布局
 
+1. 常用的简单组件和布局 java.swing.*
+
+   JFrame、JButton、JPanel、JTextField、JCheckBox、JTextArea...
+
+2. 布局：
+
+   | 布局方法              | 组件布局规则            |
+   | --------------------- | ----------------------- |
+   | FlowLayout 水平布局   | 从上往下放组件          |
+   | BorderLayout 边界布局 | 将界面分成东西南北中    |
+   | GridLayout 网格布局   | x*y的网格区（x行，y列） |
+
+   
+
+3. javax.swing.JPanle  面板 
+
+   - 比窗体丰富的操作(比如画图等操作)
+   - 面板是没有边界的窗体
+   - 习惯在窗体上布局面板，面板布局组件
 
 
 
 
-### 3.2、Java时间机制
+### 3.2、Java事件机制
 
+> Java中已经将事件都分类了（与异常原理类似）；一个事件就产生了时间类的对象给某个组件加事件操作，就是给这个组件添加一个监听器
 
+| 事件类型    | 监听器类型     | 加监听器方式                      |
+| ----------- | -------------- | --------------------------------- |
+| ActionEvent | ActionListener | addActionListener(ActionListener) |
+| XXXEvent    | XXXListener    | addXXXListener(XXXActionListener) |
 
+1. 监听器都是接口，实现接口的方法，就是事件要做的事件；
 
+2. 按钮事件 ActionEvent；
+
+3. 鼠标事件 MouseEvent
+
+   - addMouseListener：需要重写5个方法，移入，移出，按下释放点击
+   - MouseAdapter： 适配器实现了这个监听器，利用适配器不需要重写所有的方法，只需要按需要重写方法即可；
+   - MouseMotionListener：鼠标的移动和拖拽方法。
+
+4. 键盘事件：KetEvent KeyListener	addKKeyListener
+
+   给组件添加键盘事件，是指该组件获得焦点时，操作键盘，产生事件
 
 
 
 ### 3.3、画图操作
+
+> 重写paintComponent(Graphics g){}方法 
+
+```java
+g.drawLine(10,10,100,100);//直线由起始点和结束点坐标组成
+g.drawRect()//矩形由左上角和宽度/高度	决定
+g.drawString("hello",100,100);//画字符串 
+
+//Graphics2D的重要方法-->g2.draw(shape);
+
+//也可直接画图
+Line2D line = new Line2D.Double(10,10,100,100);
+Rectangle2D rect = new Rectangle2D.Double(10,10,100,100);
+//转换画笔
+Graphics2D g2 = (Graphics)g;
+g2.draw(line);
+g2.draw(rect);
+
+/* 注意：
+1、如果要调用paintComponent只需要调用repaint方法即可；
+2、画图和事件相结合。
+*/
+```
 
 
 
